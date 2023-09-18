@@ -1,5 +1,0 @@
-this is a test.
-test back.
-test again.
-https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-2018.07.0-x86_64-linux-ubuntu14.tar.gz
-test more
