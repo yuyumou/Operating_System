@@ -72,12 +72,13 @@ best_fit_init_memmap(struct Page *base, size_t n) {
     struct Page *p = base;
     for (; p != base + n; p ++) {
         assert(PageReserved(p));
-
+        p->flags = p->property = 0;
+        set_page_ref(p,0);
         /*LAB2 EXERCISE 2: YOUR CODE*/ 
         // 清空当前页框的标志和属性信息，并将页框的引用计数设置为0
     }
-    base->property = n;
-    SetPageProperty(base);
+    base->property = n;   //从base开始有n个可用页
+    SetPageProperty(base);  //设置base是一个free block的页头
     nr_free += n;
     if (list_empty(&free_list)) {
         list_add(&free_list, &(base->page_link));
@@ -85,6 +86,13 @@ best_fit_init_memmap(struct Page *base, size_t n) {
         list_entry_t* le = &free_list;
         while ((le = list_next(le)) != &free_list) {
             struct Page* page = le2page(le, page_link);
+            if(base < page){
+                list_add_before(le, &(base->page_link));
+                break;
+            }
+            else if (list_next(le) == &free_list) {
+                list_add(le, &(base->page_link));
+            }
              /*LAB2 EXERCISE 2: YOUR CODE*/ 
             // 编写代码
             // 1、当base < page时，找到第一个大于base的页，将base插入到它前面，并退出循环
@@ -106,11 +114,16 @@ best_fit_alloc_pages(size_t n) {
     // 下面的代码是first-fit的部分代码，请修改下面的代码改为best-fit
     // 遍历空闲链表，查找满足需求的空闲页框
     // 如果找到满足需求的页面，记录该页面以及当前找到的最小连续空闲页框数量
+
+    int best_fit_property = __INT_MAX__;
     while ((le = list_next(le)) != &free_list) {
-        struct Page *p = le2page(le, page_link);
-        if (p->property >= n) {
-            page = p;
-            break;
+        struct Page *p = le2page(le, page_link);    //find the next page 
+        if (p->property >= n) { // able to alloc
+            if(p->property < best_fit_property){ //better than the previous one
+                page = p;
+                best_fit_property = p->property;
+            }
+
         }
     }
 
@@ -142,6 +155,10 @@ best_fit_free_pages(struct Page *base, size_t n) {
     // 编写代码
     // 具体来说就是设置当前页块的属性为释放的页块数、并将当前页块标记为已分配状态、最后增加nr_free的值
 
+    base->property = n;
+    SetPageProperty(base);
+    nr_free += n;
+     
     if (list_empty(&free_list)) {
         list_add(&free_list, &(base->page_link));
     } else {
@@ -160,6 +177,12 @@ best_fit_free_pages(struct Page *base, size_t n) {
     list_entry_t* le = list_prev(&(base->page_link));
     if (le != &free_list) {
         p = le2page(le, page_link);
+        if (p+p->property == base){
+            p->property += base->property;
+            ClearPageProperty(base);
+            list_del(&(base->page_link));
+            base = p;
+        }
         /*LAB2 EXERCISE 2: YOUR CODE*/ 
          // 编写代码
         // 1、判断前面的空闲页块是否与当前页块是连续的，如果是连续的，则将当前页块合并到前面的空闲页块中
