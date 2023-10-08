@@ -38,7 +38,7 @@ kern_entry:
     .align PGSHIFT
     .global bootstack
 bootstack:
-    .space KSTACKSIZE
+    .space KSTACKSIZE     #2*4kB,两页内存
     .global bootstacktop
 bootstacktop:
 
