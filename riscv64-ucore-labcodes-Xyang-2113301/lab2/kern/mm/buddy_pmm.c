@@ -15,6 +15,7 @@ struct Buddy
 {
     unsigned *size;
     struct Page *mem_tree;
+    unsigned total_size;
 
 } buddy_manager;
 
@@ -57,7 +58,6 @@ static void buddy_init(void)
 
 static void buddy_init_memmap(struct Page *base, size_t n)
 {
-    cprintf("initializing %u pages\n",n);
     assert(n > 0);
     size_t round_up_n = fix_size(n);
 
@@ -77,18 +77,14 @@ static void buddy_init_memmap(struct Page *base, size_t n)
     buddy_manager.mem_tree = base;
     buddy_manager.size = (unsigned *)p;
 
-    cprintf("initial done!\n");
    
     base->property = n; // 从base开始有n个可用页
 
-    buddy_manager.size[0] = round_up_n;
-
-    cprintf("total node:%d\n",round_up_n);
+    buddy_manager.total_size = round_up_n;
 
     unsigned node_size = 2 * round_up_n;
 
-    cprintf("initializing tree\n");
-    for (int i = 0; i < round_up_n; ++i)
+    for (int i = 0; i <2 * round_up_n - 1; ++i)
     {
         if (IS_POWER_OF_2(i + 1))
         {
@@ -97,7 +93,8 @@ static void buddy_init_memmap(struct Page *base, size_t n)
         buddy_manager.size[i] = node_size;
 
     }
-    cprintf("tree done\n");
+
+    cprintf("initialized %u pages with a %u size tree\n",n,round_up_n);
     // SetPageProperty(base);  //设置base是一个free block的页头
     nr_free += n;
 }
@@ -109,38 +106,41 @@ static struct Page *buddy_alloc_pages(size_t n)
     unsigned offset = 0;
 
     assert(n > 0);
-    if (n > nr_free)
-    {
-        return NULL;
-    }
+    
     if (!IS_POWER_OF_2(n))
     {
         n = fix_size(n);
+    }
+    if (n > nr_free)
+    {
+        return NULL;
     }
     //cprintf("alloc %u pages\n",n);
     if (buddy_manager.size[index] < n)
         return NULL;
 
-    for (node_size = buddy_manager.size[0]; node_size != n; node_size /= 2)
+    for (node_size = buddy_manager.total_size; node_size != n; node_size /= 2)
     {
+        //cprintf("size: %u,index:%u\n",buddy_manager.total_size,index);
         if (buddy_manager.size[LEFT_LEAF(index)] >= n)
             index = LEFT_LEAF(index);
-        else
+        else{
             index = RIGHT_LEAF(index);
+        }
     }
 
     //cprintf("target index at %u\n",index);
-    //cprintf("node_size is %d\n",node_size);
-    buddy_manager.size[index] = 0;
-    offset = (index + 1) * node_size - buddy_manager.size[0];
 
-    //cprintf("offset is %u\n",offset);
+    buddy_manager.size[index] = 0;
+    offset = (index + 1) * node_size - buddy_manager.total_size;
 
     while (index)
     {
         index = PARENT(index);
         buddy_manager.size[index] = MAX(buddy_manager.size[LEFT_LEAF(index)], buddy_manager.size[RIGHT_LEAF(index)]);
+    
     }
+
 
     struct Page *base = buddy_manager.mem_tree + offset;
     struct Page *page;
@@ -177,27 +177,35 @@ static void buddy_free_pages(struct Page *base, size_t n)
 
     int offset = (base - buddy_manager.mem_tree);
     node_size = 1;
-    index = buddy_manager.size[0] + offset - 1;
+    index = buddy_manager.total_size + offset - 1;
 
-    for (; node_size != n; index = PARENT(index))
+    while (node_size != n)
     {
         node_size *= 2;
+        index = PARENT(index);
         if (index == 0)
             return;
     }
 
     buddy_manager.size[index] = node_size;
+
+    //cprintf("free at %u,node at %u, free to %u\n",offset,index,node_size);
+
+    //cprintf("par :%u\n",buddy_manager.size[PARENT(index)]);
+
     while (index)
     {
         index = PARENT(index);
         node_size *= 2;
         left_longest = buddy_manager.size[LEFT_LEAF(index)];
         right_longest = buddy_manager.size[RIGHT_LEAF(index)];
-        if (left_longest + right_longest == node_size)  //合并
+        if (left_longest + right_longest == node_size){  //合并
             buddy_manager.size[index] = node_size;
+        }
         else
             buddy_manager.size[index] = MAX(left_longest, right_longest);
     }
+    //cprintf("top is:%u\n",buddy_manager.size[1]);
 
     // if(n < base->property){
     //     base->property -=(base->property - n);
@@ -230,6 +238,7 @@ buddy_check(void) {
     assert((A = alloc_page()) != NULL);
     assert((B = alloc_page()) != NULL);
 
+
     assert(p0 != A && p0 != B && A != B);
     assert(page_ref(p0) == 0 && page_ref(A) == 0 && page_ref(B) == 0);
     assert(A==p0+1 && B == A+1);
@@ -247,38 +256,39 @@ buddy_check(void) {
     
     p0 = alloc_pages(8192);
 
-    //assert(p0 == A);
+    assert(p0 == A);
 
     A = alloc_pages(128);
     B = alloc_pages(64);
     // 检查是否相邻
 
-    //assert(A + 128 == B);
+    assert(A + 128 == B);
 
     
     C = alloc_pages(128);
 
-    // 检查C有没有和A重叠
-    //assert(A + 256 == C);
+
+    //检查C有没有和A重叠
+    assert(A + 256 == C);
     
-    // 释放A
-    // free_pages(A, 128);
-    // D = alloc_pages(64);
-    // cprintf("D %p\n", D);
+    //释放A
+    free_pages(A, 128);
+    D = alloc_pages(64);
+    cprintf("D %p\n", D);
 
     
     
-    // // 检查D是否能够使用A刚刚释放的内存
-    // assert(D + 128 == B);
-    // free_pages(C, 128);
-    // C = alloc_pages(64);
-    // // 检查C是否在B、D之间
-    // assert(C == D + 64 && C == B - 64);
-    // free_pages(B, 64);
-    // free_pages(D, 64);
-    // free_pages(C, 64);
-    // // 全部释放
-    // free_pages(p0, 8192);
+    // 检查D是否能够使用A刚刚释放的内存
+    assert(D + 128 == B);
+    free_pages(C, 128);
+    C = alloc_pages(64);
+    // 检查C是否在B、D之间
+    assert(C == D + 64 && C == B - 64);
+    free_pages(B, 64);
+    free_pages(D, 64);
+    free_pages(C, 64);
+    // 全部释放
+    free_pages(p0, 8192);
     
 }
 
