@@ -1,7 +1,7 @@
 #include <pmm.h>
 #include <list.h>
 #include <string.h>
-#include <best_fit_pmm.h>
+#include <buddy_pmm.h>
 #include <stdio.h>
 
 #define IS_POWER_OF_2(x) (!((x) & (x - 1)))
