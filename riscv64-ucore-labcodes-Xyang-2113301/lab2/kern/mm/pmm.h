@@ -82,11 +82,12 @@ extern const size_t nbase;
 extern uint64_t va_pa_offset;
 
 static inline ppn_t page2ppn(struct Page *page) { return page - pages + nbase; }
-
+//page and pages are virtual address,and nbase is the ppn of the very first physical page
+//this func return the ppn of page----Xyang
 static inline uintptr_t page2pa(struct Page *page) {
     return page2ppn(page) << PGSHIFT;
 }
-
+//ppn<<12,indicating the physical address of page----Xyang
 
 
 static inline int page_ref(struct Page *page) { return page->ref; }
@@ -108,6 +109,10 @@ static inline struct Page *pa2page(uintptr_t pa) {
     }
     return &pages[PPN(pa) - nbase];
 }
+
+// because pages is a virtual address,
+//pa2page takes a physical address,and return the corresbonding virtual page
+//----Xyang
 static inline void flush_tlb() { asm volatile("sfence.vm"); }
 extern char bootstack[], bootstacktop[]; // defined in entry.S
 
