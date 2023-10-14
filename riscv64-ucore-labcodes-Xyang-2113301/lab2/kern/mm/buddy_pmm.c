@@ -31,20 +31,6 @@ size_t fix_size(size_t size)
     return (1 << n);
 }
 
-size_t round_down_size(size_t size){
-    size_t n = 0;
-    size_t tmp = size;
-    cprintf("recieving size as %u\n",tmp);
-    while (tmp >>= 1)
-    {
-        cprintf("%u\n",tmp);
-        n++;
-    }
-    cprintf("done\n");
-    cprintf("%u\n",&tmp);
-    return (size_t)(1 << n);
-}
-
 free_area_t free_area;
 
 #define free_list (free_area.free_list)
@@ -58,6 +44,7 @@ static void buddy_init(void)
 
 static void buddy_init_memmap(struct Page *base, size_t n)
 {
+    //base is a virtual page,indicating the beginning of pages
     assert(n > 0);
     size_t round_up_n = fix_size(n);
 
@@ -70,9 +57,7 @@ static void buddy_init_memmap(struct Page *base, size_t n)
         //cprintf("p at %u\n",p);
         // 清空当前页框的标志和属性信息，并将页框的引用计数设置为0
     }
-    p = base + n; //p指向page的最末尾
-
-   
+    p = base + n; //p指向page的最末尾,p现在也是虚拟地址
 
     buddy_manager.mem_tree = base;
     buddy_manager.size = (unsigned *)p;
@@ -164,12 +149,6 @@ static void buddy_free_pages(struct Page *base, size_t n)
 
     assert(n > 0);
 
-    // if(n > base->property){
-    //     cprintf("exceeded tail! property is %u but n is %u\n",base->property,n);
-    //     n = base->property;   //当前内存块只负责释放自己申请的property个页
-    //     buddy_free_pages(base+n,total-n);  //剩下total-n个页交给下一个内存块释放
-    // }
-
     if (!IS_POWER_OF_2(n))
     {
         n = fix_size(n);
@@ -231,62 +210,68 @@ static void
 buddy_check(void) {
     cprintf("buddy check!\n");
     
-    struct Page *p0, *A, *B, *C, *D;
-    p0 = A = B = C = D = NULL;
+    struct Page *p0, *p1, *p2, *p3, *p4;
+    p0 = p1 = p2 = p3 = p4 = NULL;
 
     assert((p0 = alloc_page()) != NULL);
-    assert((A = alloc_page()) != NULL);
-    assert((B = alloc_page()) != NULL);
+    assert((p1 = alloc_page()) != NULL);
+    assert((p2 = alloc_page()) != NULL);
 
+    assert(p0 != p1 && p0 != p2 && p1 != p2);
+    assert(page_ref(p0) == 0 && page_ref(p1) == 0 && page_ref(p2) == 0);
+    assert(p1==p0+1 && p2 == p1+1);  //页面地址关系
 
-    assert(p0 != A && p0 != B && A != B);
-    assert(page_ref(p0) == 0 && page_ref(A) == 0 && page_ref(B) == 0);
-    assert(A==p0+1 && B == A+1);
+    assert(page2pa(p0) < npage * PGSIZE);
+    assert(page2pa(p1) < npage * PGSIZE);
+    assert(page2pa(p2) < npage * PGSIZE);
 
     free_page(p0);    
-    free_page(A);
-    free_page(B);
+    free_page(p1);
+    free_page(p2);
     
-    A = alloc_pages(512);
-    B = alloc_pages(512);
-    free_pages(A, 256);
-    free_pages(B, 512);
-    free_pages(A + 256, 256);
+    p1 = alloc_pages(512); //p1应该指向最开始的512个页
+    p2 = alloc_pages(512);
+    p3 = alloc_pages(1024);
 
-    
+    assert(p3 - p2 == p2 - p1);//检查相邻关系
+
+    free_pages(p1, 256);
+    free_pages(p2, 512);
+    free_pages(p1 + 256, 256);
+    free_pages(p3,1024);
+    //检验释放页时，相邻内存的合并
+
     p0 = alloc_pages(8192);
 
-    assert(p0 == A);
+    assert(p0 == p1); //重新分配，p0也指向最开始的页
 
-    A = alloc_pages(128);
-    B = alloc_pages(64);
-    // 检查是否相邻
-
-    assert(A + 128 == B);
-
+    p1 = alloc_pages(128);
+    p2 = alloc_pages(64);
     
-    C = alloc_pages(128);
+
+    assert(p1 + 128 == p2);// 检查是否相邻
+
+    p3 = alloc_pages(128);
 
 
-    //检查C有没有和A重叠
-    assert(A + 256 == C);
+    //检查p3和p1是否重叠
+    assert(p1 + 256 == p3);
     
-    //释放A
-    free_pages(A, 128);
-    D = alloc_pages(64);
-    cprintf("D %p\n", D);
+    //释放p1
+    free_pages(p1, 128);
 
-    
-    
-    // 检查D是否能够使用A刚刚释放的内存
-    assert(D + 128 == B);
-    free_pages(C, 128);
-    C = alloc_pages(64);
-    // 检查C是否在B、D之间
-    assert(C == D + 64 && C == B - 64);
-    free_pages(B, 64);
-    free_pages(D, 64);
-    free_pages(C, 64);
+    p4 = alloc_pages(64);
+    assert(p4 + 128 == p2);
+    // 检查p4是否能够使用p1刚刚释放的内存
+
+    free_pages(p3, 128);
+    p3 = alloc_pages(64);
+
+    // 检查p3是否在p2、p4之间
+    assert(p3 == p4 + 64 && p3 == p2 - 64);
+    free_pages(p2, 64);
+    free_pages(p4, 64);
+    free_pages(p3, 64);
     // 全部释放
     free_pages(p0, 8192);
     
