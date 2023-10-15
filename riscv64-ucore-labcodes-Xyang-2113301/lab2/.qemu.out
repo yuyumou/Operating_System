@@ -22,13 +22,40 @@ PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
 (THU.CST) os is loading ...
 Special kernel symbols:
   entry  0xffffffffc0200036 (virtual)
-  etext  0xffffffffc0201ada (virtual)
+  etext  0xffffffffc02017be (virtual)
   edata  0xffffffffc0206010 (virtual)
-  end    0xffffffffc0206470 (virtual)
+  end    0xffffffffc0206488 (virtual)
 Kernel executable memory footprint: 26KB
-memory management: best_fit_pmm_manager
+memory management: buddy_pmm_manager
 physcial memory map:
   memory: 0x0000000007e00000, [0x0000000080200000, 0x0000000087ffffff].
+initialized 31929 pages with a 32768 size tree
+buddy check!
+alloc done at 0 with 1 pages
+alloc done at 1 with 1 pages
+alloc done at 2 with 1 pages
+free done at 0 with 1 pages!
+free done at 1 with 1 pages!
+free done at 2 with 1 pages!
+alloc done at 0 with 512 pages
+alloc done at 512 with 512 pages
+alloc done at 1024 with 1024 pages
+free done at 0 with 256 pages!
+free done at 512 with 512 pages!
+free done at 256 with 256 pages!
+free done at 1024 with 1024 pages!
+alloc done at 0 with 8192 pages
+alloc done at 8192 with 128 pages
+alloc done at 8320 with 64 pages
+alloc done at 8448 with 128 pages
+free done at 8192 with 128 pages!
+alloc done at 8192 with 64 pages
+free done at 8448 with 128 pages!
+alloc done at 8256 with 64 pages
+free done at 8320 with 64 pages!
+free done at 8192 with 64 pages!
+free done at 8256 with 64 pages!
+free done at 0 with 8192 pages!
 check_alloc_page() succeeded!
 satp virtual address: 0xffffffffc0205000
 satp physical address: 0x0000000080205000
