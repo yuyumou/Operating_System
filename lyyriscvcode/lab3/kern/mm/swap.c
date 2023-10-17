@@ -40,7 +40,8 @@ swap_init(void)
      }
 
      sm = &swap_manager_clock;//use first in first out Page Replacement Algorithm
-     int r = sm->init();
+     //将sm指针指向名为swap_manager_clock的交换管理器结构体实例。这里选择了时钟算法作为交换管理器的一种实现。
+     int r = sm->init(); 
      
      if (r == 0)
      {
