@@ -13,6 +13,11 @@ swapfs_init(void) {
         panic("swap fs isn't available.\n");
     }
     max_swap_offset = ide_device_size(SWAP_DEV_NO) / (PGSIZE / SECTSIZE);
+
+    //使用static_assert进行断言检查，确保页的大小能够整除扇区的大小。
+    //检查交换分区设备是否有效，如果无效则调用panic函数触发内核崩溃。
+
+    
 }
 
 int
