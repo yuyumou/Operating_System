@@ -19,7 +19,7 @@ size_t npage = 0;
 // The kernel image is mapped at VA=KERNBASE and PA=info.base
 uint_t va_pa_offset;
 // memory starts at 0x80000000 in RISC-V
-const size_t nbase = DRAM_BASE / PGSIZE;
+const size_t nbasex = DRAM_BASE / PGSIZE;
 
 // virtual address of boot-time page directory
 pde_t *boot_pgdir = NULL;
@@ -251,8 +251,14 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
             return NULL;
         }
         set_page_ref(page, 1);
+        
+        //get the physical address of memory which this (struct* Page *) page  manages
         uintptr_t pa = page2pa(page);
+
+        // sets the first n bytes of the memory area pointed by s
         memset(KADDR(pa), 0, PGSIZE);
+
+
         *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
     }
     pde_t *pdep0 = &((pde_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
@@ -340,7 +346,11 @@ void page_remove(pde_t *pgdir, uintptr_t la) {
 // return value: always 0
 // note: PT is changed, so the TLB need to be invalidate
 int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm) {
+    //pgdir是页表基址(satp)，page对应物理页面，la是虚拟地址
+    
     pte_t *ptep = get_pte(pgdir, la, 1);
+    //先找到对应页表项的位置，如果原先不存在，get_pte()会分配页表项的内存
+
     if (ptep == NULL) {
         return -E_NO_MEM;
     }
