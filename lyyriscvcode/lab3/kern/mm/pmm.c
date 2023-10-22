@@ -19,7 +19,7 @@ size_t npage = 0;
 // The kernel image is mapped at VA=KERNBASE and PA=info.base
 uint_t va_pa_offset;
 // memory starts at 0x80000000 in RISC-V
-const size_t nbasex = DRAM_BASE / PGSIZE;
+const size_t nbase = DRAM_BASE / PGSIZE;
 
 // virtual address of boot-time page directory
 pde_t *boot_pgdir = NULL;
