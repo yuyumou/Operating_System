@@ -79,18 +79,21 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
      /* Select the victim */
      //(1)  unlink the  earliest arrival page in front of pra_list_head qeueue
      //(2)  set the addr of addr of this page to ptr_page
-    list_entry_t* entry = list_prev(curr_ptr);
     struct Page* p = NULL;
     //while (1) {
         /*LAB3 EXERCISE 4: YOUR CODE*/ 
         // 编写代码
         // 遍历页面链表pra_list_head，查找最早未被访问的页面
-        for( ; ; entry = list_prev(entry)){
-            p = le2page(entry, pra_page_link);
+        for( ; ; curr_ptr = list_prev(curr_ptr)){
+            if(curr_ptr == head){
+                continue;
+            }
+            p = le2page(curr_ptr, pra_page_link);
             if(p->flags == 1){
                 p->flags = 0;
             }else if(p->flags == 0){
-                list_del(entry);
+                list_del(curr_ptr);
+                curr_ptr = list_prev(curr_ptr);
                 *ptr_page = p;
                 return 0;
             }
