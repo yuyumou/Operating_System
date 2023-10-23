@@ -55,12 +55,47 @@ page fault at 0x00004000: K/W
 set up init env for check_swap over!
 Store/AMO page fault
 page fault at 0x00005000: K/W
-curr_ptr 0xffffffffc02258a8curr_ptr 0xffffffffc02258f0curr_ptr 0xffffffffc0225938curr_ptr 0xffffffffc0225980curr_ptr 0xffffffffc02258a8swap_out: i 0, store page in vaddr 0x1000 to disk swap entry 2
+curr_ptr 0xffffffffc02258a8
+curr_ptr 0xffffffffc02258f0
+curr_ptr 0xffffffffc0225938
+curr_ptr 0xffffffffc0225980
+curr_ptr 0xffffffffc02258a8
+swap_out: i 0, store page in vaddr 0x1000 to disk swap entry 2
 Load page fault
 page fault at 0x00001000: K/R
-curr_ptr 0xffffffffc02258f0swap_out: i 0, store page in vaddr 0x2000 to disk swap entry 3
+curr_ptr 0xffffffffc02258f0
+swap_out: i 0, store page in vaddr 0x2000 to disk swap entry 3
 swap_in: load disk swap entry 2 with swap_page in vadr 0x1000
-kernel panic at kern/mm/default_pmm.c:131:
-    assertion failed: !PageReserved(p) && !PageProperty(p)
-Welcome to the kernel debug monitor!!
-Type 'help' for a list of commands.
+count is 1, total is 8
+check_swap() succeeded!
+++ setup timer interrupts
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks

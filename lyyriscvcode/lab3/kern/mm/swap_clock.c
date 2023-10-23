@@ -62,7 +62,8 @@ _clock_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, in
     // 将页面page插入到页面链表pra_list_head的末尾
     list_add(head, entry); 
     // 将页面的visited标志置为1，表示该页面已被访问
-    page->flags = 1;
+    //page->flags = 1;
+    page->visited = 1;
 
     return 0;
 }
@@ -90,9 +91,9 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
             }
             cprintf("curr_ptr %p\n", curr_ptr);
             p = le2page(curr_ptr, pra_page_link);
-            if(p->flags == 1){
-                p->flags = 0;
-            }else if(p->flags == 0){
+            if(p->visited == 1){
+                p->visited = 0;
+            }else if(p->visited == 0){
                 list_del(curr_ptr);
                 curr_ptr = list_prev(curr_ptr);
                 *ptr_page = p;
