@@ -23,7 +23,7 @@ PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
 
 Special kernel symbols:
   entry  0xc0200036 (virtual)
-  etext  0xc020423c (virtual)
+  etext  0xc02042da (virtual)
   edata  0xc020a040 (virtual)
   end    0xc0211598 (virtual)
 Kernel executable memory footprint: 70KB
@@ -46,7 +46,21 @@ setup Page Table vaddr 0~4MB OVER!
 set up init env for check_swap begin!
 Store/AMO page fault
 page fault at 0x00001000: K/W
-kernel panic at kern/mm/swap_clock.c:51:
-    assertion failed: entry != NULL && curr_ptr != NULL
+Store/AMO page fault
+page fault at 0x00002000: K/W
+Store/AMO page fault
+page fault at 0x00003000: K/W
+Store/AMO page fault
+page fault at 0x00004000: K/W
+set up init env for check_swap over!
+Store/AMO page fault
+page fault at 0x00005000: K/W
+curr_ptr 0xffffffffc02258a8curr_ptr 0xffffffffc02258f0curr_ptr 0xffffffffc0225938curr_ptr 0xffffffffc0225980curr_ptr 0xffffffffc02258a8swap_out: i 0, store page in vaddr 0x1000 to disk swap entry 2
+Load page fault
+page fault at 0x00001000: K/R
+curr_ptr 0xffffffffc02258f0swap_out: i 0, store page in vaddr 0x2000 to disk swap entry 3
+swap_in: load disk swap entry 2 with swap_page in vadr 0x1000
+kernel panic at kern/mm/default_pmm.c:131:
+    assertion failed: !PageReserved(p) && !PageProperty(p)
 Welcome to the kernel debug monitor!!
 Type 'help' for a list of commands.
