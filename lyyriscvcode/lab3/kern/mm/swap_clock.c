@@ -88,7 +88,7 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
             if(curr_ptr == head){
                 continue;
             }
-            cprintf("curr_ptr %p", curr_ptr);
+            cprintf("curr_ptr %p\n", curr_ptr);
             p = le2page(curr_ptr, pra_page_link);
             if(p->flags == 1){
                 p->flags = 0;
