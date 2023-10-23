@@ -244,7 +244,7 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      *   PTE_U           0x004                   // page table/directory entry
      * flags bit : User can access
      */
-    pde_t *pdep1 = &pgdir[PDX1(la)];
+    pde_t *pdep1 = &pgdir[PDX1(la)];   //PDX1 三级页表号
     if (!(*pdep1 & PTE_V)) {
         struct Page *page;
         if (!create || (page = alloc_page()) == NULL) {
