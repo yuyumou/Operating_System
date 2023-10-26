@@ -36,23 +36,33 @@
 
 // page directory index
 #define PDX1(la) ((((uintptr_t)(la)) >> PDX1SHIFT) & 0x1FF)
+//从线性地址中提取一级页表的索引。通过右移位操作将线性地址中的对应部分提取出来，并通过按位与操作得到最终的一级页表索引
 #define PDX0(la) ((((uintptr_t)(la)) >> PDX0SHIFT) & 0x1FF)
+//从线性地址中提取二级页表的索引。通过类似的位移和按位与操作从线性地址中提取出二级页表索引。
 
 // page table index
 #define PTX(la) ((((uintptr_t)(la)) >> PTXSHIFT) & 0x1FF)
+//从线性地址中提取页表的索引。通过位移和按位与操作提取出线性地址中的页表索引
 
 // page number field of address
 #define PPN(la) (((uintptr_t)(la)) >> PTXSHIFT)
+//从线性地址中提取物理页号。它通过位移操作将线性地址中的物理页号部分提取出来
 
 // offset in page
 #define PGOFF(la) (((uintptr_t)(la)) & 0xFFF)
+//从线性地址中提取页内偏移。它通过按位与操作提取线性地址中的偏移部分。
+
 
 // construct linear address from indexes and offset
 #define PGADDR(d1, d0, t, o) ((uintptr_t)((d1) << PDX1SHIFT | (d0) << PDX0SHIFT | (t) << PTXSHIFT | (o)))
+//用于构造线性地址。它将传入的一级页表索引、二级页表索引、页表索引和偏移组合成一个完整的线性地址。
 
 // address in page table or page directory entry
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3FF) << (PTXSHIFT - PTE_PPN_SHIFT))
+//提取页表项中的地址。它通过一些位操作提取出页表项中表示地址的部分。
+
 #define PDE_ADDR(pde)   PTE_ADDR(pde)
+//用于提取页目录项中的地址。
 
 /* page directory and page table constants */
 #define NPDEENTRY       512                    // page directory entries per page directory

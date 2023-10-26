@@ -2,6 +2,7 @@
 #include <swapfs.h>
 #include <swap_fifo.h>
 #include <swap_clock.h>
+#include <swap_lru.h>
 #include <stdio.h>
 #include <string.h>
 #include <memlayout.h>
@@ -39,8 +40,9 @@ swap_init(void)
         panic("bad max_swap_offset %08x.\n", max_swap_offset);
      }
 
-     sm = &swap_manager_clock;//use first in first out Page Replacement Algorithm
-     int r = sm->init();
+     sm = &swap_manager_lru;//use first in first out Page Replacement Algorithm
+     
+     int r = sm->init(); 
      
      if (r == 0)
      {
@@ -95,7 +97,7 @@ swap_out(struct mm_struct *mm, int n, int in_tick)
           }          
           //assert(!PageReserved(page));
 
-          //cprintf("SWAP: choose victim page 0x%08x\n", page);
+          cprintf("SWAP: choose victim page 0x%08x\n", page);
           
           v=page->pra_vaddr; 
           pte_t *ptep = get_pte(mm->pgdir, v, 0);
@@ -140,7 +142,26 @@ swap_in(struct mm_struct *mm, uintptr_t addr, struct Page **ptr_result)
 
 static inline void
 check_content_set(void)
-{
+{    
+     if(strcmp(sm->name,"lru swap manager")==0){
+          lru_access(0x1000, 0x0a);
+          assert(pgfault_num==1);
+          lru_access(0x1010, 0x0a);
+          assert(pgfault_num==1);
+          lru_access(0x2000, 0x0b);
+          assert(pgfault_num==2);
+          lru_access(0x2010, 0x0b);
+          assert(pgfault_num==2);
+          lru_access(0x3000, 0x0c);
+          assert(pgfault_num==3);
+          lru_access(0x3010, 0x0c);
+          assert(pgfault_num==3);
+          lru_access(0x4000, 0x0d);
+          assert(pgfault_num==4);
+          lru_access(0x4010, 0x0d);
+          assert(pgfault_num==4);
+     }
+     else{
      *(unsigned char *)0x1000 = 0x0a;
      assert(pgfault_num==1);
      *(unsigned char *)0x1010 = 0x0a;
@@ -157,6 +178,7 @@ check_content_set(void)
      assert(pgfault_num==4);
      *(unsigned char *)0x4010 = 0x0d;
      assert(pgfault_num==4);
+     }
 }
 
 static inline int
@@ -277,4 +299,31 @@ check_swap(void)
      //assert(count == 0);
      
      cprintf("check_swap() succeeded!\n");
+}
+
+void lru_update(int addr){
+    struct Page* pg = get_page(check_mm_struct->pgdir, addr, NULL);
+    if(check_mm_struct!=NULL){
+        list_entry_t *head=(list_entry_t*) check_mm_struct->sm_priv;
+        assert(head != NULL);
+        list_entry_t *le = head->next;
+        // 遍历check_mm_struct的链表，visited加1,若是刚刚访问的addr，visited改为0
+        while (le!=head) {
+            struct Page* page = le2page(le,pra_page_link);
+            if(page!=pg) page->visited++;
+            else {
+               page->visited =0;
+               cprintf("visited ref=%d pra_vaddr=%p\n",page->ref,page->pra_vaddr);
+            }
+            le = le->next;
+        }
+        return;
+    }
+    return;
+
+}
+
+void lru_access(int addr, int val){
+    *(unsigned char *)addr = val;
+    lru_update(addr);
 }
