@@ -773,7 +773,7 @@ ffffffffc020049c:	8082                	ret
 ffffffffc020049e <ide_device_valid>:
 
 #define MAX_IDE 2
-#define MAX_DISK_NSECS 56
+#define MAX_DISK_NSECS 56  //in the test ,max page is 7,each page needs 8 secs ------Xyang
 static char ide[MAX_DISK_NSECS * SECTSIZE];
 
 bool ide_device_valid(unsigned short ideno) { return ideno < MAX_IDE; }
@@ -2943,7 +2943,7 @@ ffffffffc020176c <get_pte>:
 //  la:     the linear address need to map
 //  create: a logical value to decide if alloc a page for PT
 // return vaule: the kernel virtual address of this pte
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {  //return the 1st pte
 ffffffffc020176c:	715d                	addi	sp,sp,-80
 ffffffffc020176e:	fc26                	sd	s1,56(sp)
      *   PTE_W           0x002                   // page table/directory entry
@@ -2956,9 +2956,9 @@ ffffffffc0201770:	01e5d493          	srli	s1,a1,0x1e
 ffffffffc0201774:	1ff4f493          	andi	s1,s1,511
 ffffffffc0201778:	048e                	slli	s1,s1,0x3
 ffffffffc020177a:	94aa                	add	s1,s1,a0
-    if (!(*pdep1 & PTE_V)) {
+    if (!(*pdep1 & PTE_V)) {        //三级页表项的valid位为0，无法访问或不存在
 ffffffffc020177c:	6094                	ld	a3,0(s1)
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {  //return the 1st pte
 ffffffffc020177e:	f84a                	sd	s2,48(sp)
 ffffffffc0201780:	f44e                	sd	s3,40(sp)
 ffffffffc0201782:	f052                	sd	s4,32(sp)
@@ -2967,17 +2967,17 @@ ffffffffc0201786:	e0a2                	sd	s0,64(sp)
 ffffffffc0201788:	ec56                	sd	s5,24(sp)
 ffffffffc020178a:	e85a                	sd	s6,16(sp)
 ffffffffc020178c:	e45e                	sd	s7,8(sp)
-    if (!(*pdep1 & PTE_V)) {
+    if (!(*pdep1 & PTE_V)) {        //三级页表项的valid位为0，无法访问或不存在
 ffffffffc020178e:	0016f793          	andi	a5,a3,1
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {  //return the 1st pte
 ffffffffc0201792:	892e                	mv	s2,a1
 ffffffffc0201794:	8a32                	mv	s4,a2
 ffffffffc0201796:	00010997          	auipc	s3,0x10
 ffffffffc020179a:	cc298993          	addi	s3,s3,-830 # ffffffffc0211458 <npage>
-    if (!(*pdep1 & PTE_V)) {
+    if (!(*pdep1 & PTE_V)) {        //三级页表项的valid位为0，无法访问或不存在
 ffffffffc020179e:	e3c9                	bnez	a5,ffffffffc0201820 <get_pte+0xb4>
         struct Page *page;
-        if (!create || (page = alloc_page()) == NULL) {
+        if (!create || (page = alloc_page()) == NULL) {  //if create == 1,alloc page; if create == 0 and valid is 0, return NULL---Xyang
 ffffffffc02017a0:	16060163          	beqz	a2,ffffffffc0201902 <get_pte+0x196>
 ffffffffc02017a4:	4505                	li	a0,1
 ffffffffc02017a6:	eb9ff0ef          	jal	ra,ffffffffc020165e <alloc_pages>
@@ -2999,7 +2999,7 @@ ffffffffc02017d2:	4785                	li	a5,1
         }
         set_page_ref(page, 1);
         uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
+        memset(KADDR(pa), 0, PGSIZE);  //KADDR(pa) == page2kva(page)
 ffffffffc02017d4:	00010997          	auipc	s3,0x10
 ffffffffc02017d8:	c8498993          	addi	s3,s3,-892 # ffffffffc0211458 <npage>
 static inline ppn_t page2ppn(struct Page *page) { return page - pages + nbase; }
@@ -3036,7 +3036,7 @@ static inline pte_t pte_create(uintptr_t ppn, int type) {
     return (ppn << PTE_PPN_SHIFT) | PTE_V | type;
 ffffffffc0201818:	06aa                	slli	a3,a3,0xa
 ffffffffc020181a:	0116e693          	ori	a3,a3,17
-        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
+        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);  //建立页表项
 ffffffffc020181e:	e094                	sd	a3,0(s1)
     }
     pde_t *pdep0 = &((pde_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
@@ -3164,7 +3164,7 @@ ffffffffc0201940:	10b00593          	li	a1,267
 ffffffffc0201944:	00003517          	auipc	a0,0x3
 ffffffffc0201948:	77c50513          	addi	a0,a0,1916 # ffffffffc02050c0 <default_pmm_manager+0x78>
 ffffffffc020194c:	a29fe0ef          	jal	ra,ffffffffc0200374 <__panic>
-        memset(KADDR(pa), 0, PGSIZE);
+        memset(KADDR(pa), 0, PGSIZE);  //KADDR(pa) == page2kva(page)
 ffffffffc0201950:	86aa                	mv	a3,a0
 ffffffffc0201952:	00003617          	auipc	a2,0x3
 ffffffffc0201956:	74660613          	addi	a2,a2,1862 # ffffffffc0205098 <default_pmm_manager+0x50>
@@ -5625,7 +5625,7 @@ ffffffffc0202ff2:	89b2                	mv	s3,a2
 ffffffffc0202ff4:	e6afe0ef          	jal	ra,ffffffffc020165e <alloc_pages>
      assert(result!=NULL);
 ffffffffc0202ff8:	c129                	beqz	a0,ffffffffc020303a <swap_in+0x5a>
-     pte_t *ptep = get_pte(mm->pgdir, addr, 0);
+     pte_t *ptep = get_pte(mm->pgdir, addr, 0);   //得到addr所在的page对应的一级页表项
 ffffffffc0202ffa:	842a                	mv	s0,a0
 ffffffffc0202ffc:	01893503          	ld	a0,24(s2)
 ffffffffc0203000:	4601                	li	a2,0
@@ -6179,13 +6179,13 @@ ffffffffc02034a4:	8082                	ret
 ffffffffc02034a6 <find_vma>:
     if (mm != NULL) {
 ffffffffc02034a6:	c51d                	beqz	a0,ffffffffc02034d4 <find_vma+0x2e>
-        vma = mm->mmap_cache;
+        vma = mm->mmap_cache;   //mmap_cache stores recent accessed vma ----Xyang
 ffffffffc02034a8:	691c                	ld	a5,16(a0)
         if (!(vma != NULL && vma->vm_start <= addr && vma->vm_end > addr)) {
 ffffffffc02034aa:	c781                	beqz	a5,ffffffffc02034b2 <find_vma+0xc>
 ffffffffc02034ac:	6798                	ld	a4,8(a5)
 ffffffffc02034ae:	02e5f663          	bleu	a4,a1,ffffffffc02034da <find_vma+0x34>
-                list_entry_t *list = &(mm->mmap_list), *le = list;
+                list_entry_t *list = &(mm->mmap_list), *le = list;   //begin searching from mmap_list(head) -----Xyang
 ffffffffc02034b2:	87aa                	mv	a5,a0
     return listelm->next;
 ffffffffc02034b4:	679c                	ld	a5,8(a5)
@@ -6200,7 +6200,7 @@ ffffffffc02034c6:	fee5f7e3          	bleu	a4,a1,ffffffffc02034b4 <find_vma+0xe>
 ffffffffc02034ca:	1781                	addi	a5,a5,-32
         if (vma != NULL) {
 ffffffffc02034cc:	c781                	beqz	a5,ffffffffc02034d4 <find_vma+0x2e>
-            mm->mmap_cache = vma;
+            mm->mmap_cache = vma;   //update cache
 ffffffffc02034ce:	e91c                	sd	a5,16(a0)
 }
 ffffffffc02034d0:	853e                	mv	a0,a5
@@ -6213,7 +6213,7 @@ ffffffffc02034d8:	8082                	ret
         if (!(vma != NULL && vma->vm_start <= addr && vma->vm_end > addr)) {
 ffffffffc02034da:	6b98                	ld	a4,16(a5)
 ffffffffc02034dc:	fce5fbe3          	bleu	a4,a1,ffffffffc02034b2 <find_vma+0xc>
-            mm->mmap_cache = vma;
+            mm->mmap_cache = vma;   //update cache
 ffffffffc02034e0:	e91c                	sd	a5,16(a0)
     return vma;
 ffffffffc02034e2:	b7fd                	j	ffffffffc02034d0 <find_vma+0x2a>
@@ -6239,7 +6239,7 @@ ffffffffc02034f4:	a8b9                	j	ffffffffc0203552 <insert_vma_struct+0x6
         list_entry_t *le = list;
         while ((le = list_next(le)) != list) {
             struct vma_struct *mmap_prev = le2vma(le, list_link);
-            if (mmap_prev->vm_start > vma->vm_start) {
+            if (mmap_prev->vm_start > vma->vm_start) {//sorted by start 
 ffffffffc02034f6:	fe87b683          	ld	a3,-24(a5)
 ffffffffc02034fa:	04d66763          	bltu	a2,a3,ffffffffc0203548 <insert_vma_struct+0x64>
 ffffffffc02034fe:	873e                	mv	a4,a5
@@ -7030,13 +7030,13 @@ ffffffffc0203b7e:	cbad                	beqz	a5,ffffffffc0203bf0 <do_pgfault+0xca
             //map of phy addr <--->
             //logical addr
             //(3) make the page swappable.
-            if(swap_in(mm,addr,&page))
+            if(swap_in(mm,addr,&page))  //将addr所在的页swap到page中，mm是该大大页的内存管理器
 ffffffffc0203b80:	0030                	addi	a2,sp,8
 ffffffffc0203b82:	85a2                	mv	a1,s0
 ffffffffc0203b84:	8526                	mv	a0,s1
             struct Page *page = NULL;
 ffffffffc0203b86:	e402                	sd	zero,8(sp)
-            if(swap_in(mm,addr,&page))
+            if(swap_in(mm,addr,&page))  //将addr所在的页swap到page中，mm是该大大页的内存管理器
 ffffffffc0203b88:	c58ff0ef          	jal	ra,ffffffffc0202fe0 <swap_in>
 ffffffffc0203b8c:	892a                	mv	s2,a0
 ffffffffc0203b8e:	e92d                	bnez	a0,ffffffffc0203c00 <do_pgfault+0xda>
@@ -7044,20 +7044,20 @@ ffffffffc0203b8e:	e92d                	bnez	a0,ffffffffc0203c00 <do_pgfault+0xda
                 cprintf("swap in failed!\n");
                 goto failed;
             };
-            page_insert(mm->pgdir,page,addr,perm);
+            page_insert(mm->pgdir,page,addr,perm);  //建立addr所在的地址与page的映射关系
 ffffffffc0203b90:	65a2                	ld	a1,8(sp)
 ffffffffc0203b92:	6c88                	ld	a0,24(s1)
 ffffffffc0203b94:	86ce                	mv	a3,s3
 ffffffffc0203b96:	8622                	mv	a2,s0
 ffffffffc0203b98:	eadfd0ef          	jal	ra,ffffffffc0201a44 <page_insert>
-            swap_map_swappable(mm,addr,page,1);
+            swap_map_swappable(mm,addr,page,1);     //加入换入换出队列
 ffffffffc0203b9c:	6622                	ld	a2,8(sp)
 ffffffffc0203b9e:	4685                	li	a3,1
 ffffffffc0203ba0:	85a2                	mv	a1,s0
 ffffffffc0203ba2:	8526                	mv	a0,s1
 ffffffffc0203ba4:	b18ff0ef          	jal	ra,ffffffffc0202ebc <swap_map_swappable>
 
-            page->pra_vaddr = addr;
+            page->pra_vaddr = addr;                 //该page对应的地址
 ffffffffc0203ba8:	67a2                	ld	a5,8(sp)
 ffffffffc0203baa:	e3a0                	sd	s0,64(a5)
    }
