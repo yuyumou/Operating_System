@@ -94,10 +94,10 @@ struct vma_struct *
 find_vma(struct mm_struct *mm, uintptr_t addr) {
     struct vma_struct *vma = NULL;
     if (mm != NULL) {
-        vma = mm->mmap_cache;
+        vma = mm->mmap_cache;   //mmap_cache stores recent accessed vma ----Xyang
         if (!(vma != NULL && vma->vm_start <= addr && vma->vm_end > addr)) {
                 bool found = 0;
-                list_entry_t *list = &(mm->mmap_list), *le = list;
+                list_entry_t *list = &(mm->mmap_list), *le = list;   //begin searching from mmap_list(head) -----Xyang
                 while ((le = list_next(le)) != list) {
                     vma = le2vma(le, list_link);
                     if (vma->vm_start<=addr && addr < vma->vm_end) {
@@ -110,7 +110,7 @@ find_vma(struct mm_struct *mm, uintptr_t addr) {
                 }
         }
         if (vma != NULL) {
-            mm->mmap_cache = vma;
+            mm->mmap_cache = vma;   //update cache
         }
     }
     return vma;
@@ -130,13 +130,13 @@ check_vma_overlap(struct vma_struct *prev, struct vma_struct *next) {
 void
 insert_vma_struct(struct mm_struct *mm, struct vma_struct *vma) {
     assert(vma->vm_start < vma->vm_end);
-    list_entry_t *list = &(mm->mmap_list);
+    list_entry_t *list = &(mm->mmap_list); //head
     list_entry_t *le_prev = list, *le_next;
 
         list_entry_t *le = list;
         while ((le = list_next(le)) != list) {
             struct vma_struct *mmap_prev = le2vma(le, list_link);
-            if (mmap_prev->vm_start > vma->vm_start) {
+            if (mmap_prev->vm_start > vma->vm_start) {//sorted by start 
                 break;
             }
             le_prev = le;
@@ -407,15 +407,15 @@ do_pgfault(struct mm_struct *mm, uint_t error_code, uintptr_t addr) {
             //map of phy addr <--->
             //logical addr
             //(3) make the page swappable.
-            if(swap_in(mm,addr,&page))
+            if(swap_in(mm,addr,&page))  //将addr所在的页swap到page中，mm是该大大页的内存管理器
             {
                 cprintf("swap in failed!\n");
                 goto failed;
             };
-            page_insert(mm->pgdir,page,addr,perm);
-            swap_map_swappable(mm,addr,page,1);
+            page_insert(mm->pgdir,page,addr,perm);  //建立addr所在的地址与page的映射关系
+            swap_map_swappable(mm,addr,page,1);     //加入换入换出队列
 
-            page->pra_vaddr = addr;
+            page->pra_vaddr = addr;                 //该page对应的地址
         } else {
             cprintf("no swap_init_ok but ptep is %x, failed\n", *ptep);
             goto failed;
