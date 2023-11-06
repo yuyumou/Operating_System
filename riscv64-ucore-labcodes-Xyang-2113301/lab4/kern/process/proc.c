@@ -111,7 +111,7 @@ alloc_proc(void) {
     // 内核栈起始地址先设为0
     proc->kstack = NULL;
     // 需要调度
-    proc->need_resched = 1;
+    proc->need_resched = 0;
     // 无父进程
     proc->parent = NULL;
     // mm管理器为空
@@ -198,6 +198,15 @@ proc_run(struct proc_struct *proc) {
         *   lcr3():                   Modify the value of CR3 register
         *   switch_to():              Context switching between two processes
         */
+       bool intr;
+       local_intr_save(intr);
+       struct proc_struct *tmp;
+       tmp = current;
+       current = proc;
+       lcr3(current->cr3);
+       switch_to(&(tmp->context),&(current->context));
+       
+       local_intr_restore(intr);
        
     }
 }
