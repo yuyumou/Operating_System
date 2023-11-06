@@ -64,6 +64,7 @@ _clock_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, in
     pte_t *pte =  get_pte(mm->pgdir,addr,0);
 
     *pte |= PTE_A;
+    page->visited =1;
     curr_ptr = entry;
 
     cprintf("curr_ptr 0x%016lx\n",curr_ptr);
@@ -94,9 +95,10 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
         if(entry!=head){
             struct Page* page = le2page(entry,pra_page_link);
             
-            pte_t *pte =  get_pte(mm->pgdir, (uintptr_t)page->pra_vaddr, 0);
-            if(*pte & PTE_A){ //accessed
-                *pte &= ~PTE_A;
+            //pte_t *pte =  get_pte(mm->pgdir, (uintptr_t)page->pra_vaddr, 0);
+            if(page->visited){ //accessed
+                //*pte &= ~PTE_A;
+                page->visited = 0;
                 continue;
                 
             }
