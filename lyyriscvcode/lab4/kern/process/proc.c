@@ -102,29 +102,34 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
-    proc->state = PROC_UNINIT;
-    // 进程id为-1
+    // 初始为UNINT态
+    proc->state = PROC_UNINIT;  
+    // pid为未初始化值
     proc->pid = -1;
-    // 运行次数为0
+    // 运行时间为0
     proc->runs = 0;
-    // 内核栈的起始地址
+    // 内核栈起始地址先设为0
     proc->kstack = 0;
-    // 是否需要重新调度，让出CPU资源
+    // 需要调度
     proc->need_resched = 0;
-    // 父进程
+    // 无父进程
     proc->parent = NULL;
-    // 关联的内存管理器
+    // mm管理器为空
     proc->mm = NULL;
-    // 保存的上下文寄存器信息
-    memset(&(proc->context), 0, sizeof(struct context));
-    // trapframe
+    // 上下文初始化为0
+    memset(&(proc->context),0,sizeof(struct context));
+    // tf结构体指针初始化NULL
     proc->tf = NULL;
-    // boot_cr3指向内核虚拟空间的页目录表首地址。cr3表示页目录表的物理首地址。内核中物理地址=虚拟地址
+    // 采用uCore内核页表起始地址boot_cr3
     proc->cr3 = boot_cr3;
-    // 状态标志位
-    proc->flags = 0;
-    // 进程名称
-    memset(&(proc->name), 0, PROC_NAME_LEN + 1);
+    // flag 设为NULL
+    proc->flags = NULL;
+    // 将名称字符串初始化为0
+    memset(proc->name,0,PROC_NAME_LEN+1);
+
+
+
+
     }
     return proc;
 }
@@ -193,12 +198,15 @@ proc_run(struct proc_struct *proc) {
         *   lcr3():                   Modify the value of CR3 register
         *   switch_to():              Context switching between two processes
         */
+       
        bool x;
        local_intr_save(x);
-       lcr3(proc->cr3);
-       switch_to(&current->context, &proc->context);
-       current = proc;
-       __intr_restore(x);
+       struct proc_struct* last = current; 
+       current = proc;       
+       lcr3(current->cr3);
+       switch_to(&(last->context),&(current->context));
+       local_intr_restore(x);
+       
     }
 }
 
@@ -318,28 +326,33 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
      */
 
     //    1. call alloc_proc to allocate a proc_struct
-    if ((proc = alloc_proc()) == NULL) {
+    if((proc = alloc_proc()) == NULL){
         goto fork_out;
     }
     //    2. call setup_kstack to allocate a kernel stack for child process
     if(setup_kstack(proc)){
-        goto bad_fork_cleanup_proc;
-    }
-    //    3. call copy_mm to dup OR share mm according clone_flag
-    if(copy_mm(clone_flags, proc)){
         goto bad_fork_cleanup_kstack;
     }
+    //    3. call copy_mm to dup OR share mm according clone_flag
+    
+    if(copy_mm(clone_flags,proc)){
+        goto bad_fork_cleanup_proc;
+    }
     //    4. call copy_thread to setup tf & context in proc_struct
-    copy_thread(proc, stack, tf);
+    copy_thread(proc,stack,tf);
     //    5. insert proc_struct into hash_list && proc_list
+    bool x;
+    list_add(list_prev(&proc_list),&(proc->list_link));
+    proc->parent = current;
     proc->pid = get_pid();
     hash_proc(proc);
-    list_add(&proc_list, &(proc->list_link));
-    nr_process ++;    
+    nr_process++;
+
     //    6. call wakeup_proc to make the new child process RUNNABLE
     wakeup_proc(proc);
     //    7. set ret vaule using child proc's pid
     ret = proc->pid;
+
     
 
 fork_out:
@@ -433,4 +446,3 @@ cpu_idle(void) {
         }
     }
 }
-

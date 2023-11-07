@@ -23,9 +23,9 @@ PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
 
 Special kernel symbols:
   entry  0xc0200036 (virtual)
-  etext  0xc0204e9e (virtual)
+  etext  0xc0204ef4 (virtual)
   edata  0xc020a060 (virtual)
-  end    0xc02155f8 (virtual)
+  end    0xc0215600 (virtual)
 Kernel executable memory footprint: 86KB
 memory management: default_pmm_manager
 physcial memory map:
@@ -97,48 +97,11 @@ swap_out: i 0, store page in vaddr 0x2000 to disk swap entry 3
 swap_in: load disk swap entry 2 with swap_page in vadr 0x1000
 check_swap() succeeded!
 ++ setup timer interrupts
-Store/AMO access fault
-page falut at 0x88000000: K/R
-not valid addr 88000000, and  can not find it in vma
-trapframe at 0xffffffffc7fffe40
-  zero     0x00000000
-  ra       0xc0204224
-  sp       0xc7ffff60
-  gp       0x00000000
-  tp       0x8001be00
-  t0       0xc0200036
-  t1       0xc0208fb8
-  t2       0x00000001
-  s0       0x00000000
-  s1       0x00000000
-  a0       0x00000000
-  a1       0xc04161e0
-  a2       0xc02155e8
-  a3       0x80000000
-  a4       0xc0416010
-  a5       0xc0416010
-  a6       0x00000002
-  a7       0xc0416010
-  s2       0x00000000
-  s3       0x00000000
-  s4       0x00000000
-  s5       0x00000000
-  s6       0x00000000
-  s7       0x00000000
-  s8       0x00000000
-  s9       0x00000000
-  s10      0x00000000
-  s11      0x00000000
-  t3       0x00000001
-  t4       0x00000000
-  t5       0x00000000
-  t6       0x82200000
-  status   0x00046100
-  epc      0xc0200ae8
-  badvaddr 0x88000000
-  cause    0x00000007
-kernel panic at kern/trap/trap.c:189:
-    handle pgfault failed. invalid parameter
+this initproc, pid = 1, name = "init"
+To U: "Hello world!!".
+To U: "en.., Bye, Bye. :)"
+kernel panic at kern/process/proc.c:374:
+    process exit!!.
 
 Welcome to the kernel debug monitor!!
 Type 'help' for a list of commands.
