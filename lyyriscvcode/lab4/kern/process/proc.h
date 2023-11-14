@@ -71,6 +71,6 @@ void cpu_idle(void) __attribute__((noreturn));
 struct proc_struct *find_proc(int pid);
 int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf);
 int do_exit(int error_code);
-
+static int init_main(void *arg);
 #endif /* !__KERN_PROCESS_PROC_H__ */
 
