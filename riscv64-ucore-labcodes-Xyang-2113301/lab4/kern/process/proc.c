@@ -344,7 +344,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    5. insert proc_struct into hash_list && proc_list
     bool intr;
     local_intr_save(intr);
-    list_add(list_prev(&proc_list),&(proc->list_link));
+    list_add(list_prev(&proc_list),&(proc->list_link)); 
     proc->parent = current;
     proc->pid = get_pid();
     hash_proc(proc);
@@ -428,7 +428,7 @@ proc_init(void) {
 
     current = idleproc;
 
-    int pid = kernel_thread(init_main, "Hello world!!", 0);
+    int pid = kernel_thread(init_main, "Hello world!!", 0);   //创建线程
     if (pid <= 0) {
         panic("create init_main failed.\n");
     }
