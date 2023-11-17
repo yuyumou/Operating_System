@@ -216,7 +216,7 @@ void pmm_init(void) {
 //  la:     the linear address need to map
 //  create: a logical value to decide if alloc a page for PT
 // return vaule: the kernel virtual address of this pte
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {  //return the 1st pte
     /*
      *
      * If you need to visit a physical address, please use KADDR()
@@ -245,15 +245,15 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      * flags bit : User can access
      */
     pde_t *pdep1 = &pgdir[PDX1(la)];   //PDX1 三级页表号
-    if (!(*pdep1 & PTE_V)) {
+    if (!(*pdep1 & PTE_V)) {        //三级页表项的valid位为0，无法访问或不存在
         struct Page *page;
-        if (!create || (page = alloc_page()) == NULL) {
+        if (!create || (page = alloc_page()) == NULL) {  //if create == 1,alloc page; if create == 0 and valid is 0, return NULL---Xyang
             return NULL;
         }
         set_page_ref(page, 1);
         uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
-        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
+        memset(KADDR(pa), 0, PGSIZE);  //KADDR(pa) == page2kva(page)
+        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);  //建立页表项
     }
     pde_t *pdep0 = &((pde_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
 //    pde_t *pdep0 = &((pde_t *)(PDE_ADDR(*pdep1)))[PDX0(la)];
