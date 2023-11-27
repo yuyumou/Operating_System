@@ -128,9 +128,12 @@ alloc_proc(void) {
     // 将名称字符串初始化为0
     memset(proc->name,0,PROC_NAME_LEN+1);
 
-
-
-
+     //LAB5 YOUR CODE : (update LAB4 steps)
+     /*
+     * below fields(add in LAB5) in proc_struct need to be initialized  
+     *       uint32_t wait_state;                        // waiting state
+     *       struct proc_struct *cptr, *yptr, *optr;     // relations between processes
+     */
     }
     return proc;
 }
@@ -445,10 +448,9 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    6. call wakeup_proc to make the new child process RUNNABLE
     wakeup_proc(proc);
     //    7. set ret vaule using child proc's pid
-    ret = proc->pid;
 
     
-
+ 
 fork_out:
     return ret;
 
@@ -458,7 +460,6 @@ bad_fork_cleanup_proc:
     kfree(proc);
     goto fork_out;
 }
-
 
 // do_exit - called by sys_exit
 //   1. call exit_mmap & put_pgdir & mm_destroy to free the almost all memory space of process

@@ -184,7 +184,7 @@ void exception_handler(struct trapframe *tf) {
         case CAUSE_FETCH_ACCESS:
             cprintf("Instruction access fault\n");
             break;
-       case CAUSE_ILLEGAL_INSTRUCTION:
+        case CAUSE_ILLEGAL_INSTRUCTION:
              // 非法指令异常处理
              /* LAB1 CHALLENGE3   YOUR CODE :  */
             /*(1)输出指令异常类型（ Illegal instruction）
