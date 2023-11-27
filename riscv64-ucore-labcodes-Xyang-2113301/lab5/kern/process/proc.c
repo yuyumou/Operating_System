@@ -87,7 +87,7 @@ static struct proc_struct *
 alloc_proc(void) {
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL) {
-    //LAB4:EXERCISE1 YOUR CODE
+    //LAB4:EXERCISE1 2113301
     /*
      * below fields in proc_struct need to be initialized
      *       enum proc_state state;                      // Process state
@@ -103,13 +103,34 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
+    // 初始为UNINT态
+    proc->state = PROC_UNINIT;  
+    // pid为未初始化值
+    proc->pid = -1;
+    // 运行时间为0
+    proc->runs = 0;
+    // 内核栈起始地址先设为0
+    proc->kstack = NULL;
+    // 需要调度
+    proc->need_resched = 0;
+    // 无父进程
+    proc->parent = NULL;
+    // mm管理器为空
+    proc->mm = NULL;
+    // 上下文初始化为0
+    memset(&(proc->context),0,sizeof(struct context));
+    // tf结构体指针初始化NULL
+    proc->tf = NULL;
+    // 采用uCore内核页表起始地址boot_cr3
+    proc->cr3 = boot_cr3;
+    // flag 设为NULL
+    proc->flags = NULL;
+    // 将名称字符串初始化为0
+    memset(proc->name,0,PROC_NAME_LEN+1);
 
-     //LAB5 YOUR CODE : (update LAB4 steps)
-     /*
-     * below fields(add in LAB5) in proc_struct need to be initialized  
-     *       uint32_t wait_state;                        // waiting state
-     *       struct proc_struct *cptr, *yptr, *optr;     // relations between processes
-     */
+
+
+
     }
     return proc;
 }
@@ -206,6 +227,15 @@ proc_run(struct proc_struct *proc) {
         *   lcr3():                   Modify the value of CR3 register
         *   switch_to():              Context switching between two processes
         */
+       bool intr;
+       local_intr_save(intr);
+       struct proc_struct *tmp;
+       tmp = current;
+       current = proc;
+       lcr3(current->cr3);
+       switch_to(&(tmp->context),&(current->context));
+       
+       local_intr_restore(intr);
 
     }
 }
@@ -369,7 +399,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
         goto fork_out;
     }
     ret = -E_NO_MEM;
-    //LAB4:EXERCISE2 YOUR CODE
+    //LAB4:EXERCISE2 2113301
     /*
      * Some Useful MACROs, Functions and DEFINEs, you can use them in below implementation.
      * MACROs or Functions:
@@ -388,22 +418,37 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
      */
 
     //    1. call alloc_proc to allocate a proc_struct
+    if((proc = alloc_proc()) == NULL){
+        goto fork_out;
+    }
     //    2. call setup_kstack to allocate a kernel stack for child process
+    if(setup_kstack(proc)){
+        goto bad_fork_cleanup_kstack;
+    }
     //    3. call copy_mm to dup OR share mm according clone_flag
+    
+    if(copy_mm(clone_flags,proc)){
+        goto bad_fork_cleanup_proc;
+    }
     //    4. call copy_thread to setup tf & context in proc_struct
+    copy_thread(proc,stack,tf);
     //    5. insert proc_struct into hash_list && proc_list
-    //    6. call wakeup_proc to make the new child process RUNNABLE
-    //    7. set ret vaule using child proc's pid
+    bool intr;
+    local_intr_save(intr);
+    list_add(list_prev(&proc_list),&(proc->list_link)); 
+    proc->parent = current;
+    proc->pid = get_pid();
+    hash_proc(proc);
+    nr_process++;
+    local_intr_restore(intr);
 
-    //LAB5 YOUR CODE : (update LAB4 steps)
-    //TIPS: you should modify your written code in lab4(step1 and step5), not add more code.
-   /* Some Functions
-    *    set_links:  set the relation links of process.  ALSO SEE: remove_links:  lean the relation links of process 
-    *    -------------------
-    *    update step 1: set child proc's parent to current process, make sure current process's wait_state is 0
-    *    update step 5: insert proc_struct into hash_list && proc_list, set the relation links of process
-    */
- 
+    //    6. call wakeup_proc to make the new child process RUNNABLE
+    wakeup_proc(proc);
+    //    7. set ret vaule using child proc's pid
+    ret = proc->pid;
+
+    
+
 fork_out:
     return ret;
 
@@ -413,6 +458,7 @@ bad_fork_cleanup_proc:
     kfree(proc);
     goto fork_out;
 }
+
 
 // do_exit - called by sys_exit
 //   1. call exit_mmap & put_pgdir & mm_destroy to free the almost all memory space of process
